@@ -1,11 +1,12 @@
 ﻿using System;
+using STRINGS;
 using TUNING;
 using UnityEngine;
 
-// Token: 0x02000078 RID: 120
-public class DevPumpLiquidConfig : IBuildingConfig
+// Token: 0x02000463 RID: 1123
+public class WaterPumpConfig : IBuildingConfig
 {
-    // Token: 0x06000242 RID: 578 RVA: 0x0000FDC8 File Offset: 0x0000DFC8
+    // Token: 0x06001781 RID: 6017 RVA: 0x0008580C File Offset: 0x00083A0C
     public override BuildingDef CreateBuildingDef()
     {
         string id = "WaterPump";
@@ -13,57 +14,78 @@ public class DevPumpLiquidConfig : IBuildingConfig
         int height = 3;
         string anim = "waterpurifier_kanim";
         int hitpoints = 100;
-        float construction_time = 60f;
-        float[] tier = BUILDINGS.CONSTRUCTION_MASS_KG.TIER4;
+        float construction_time = 30f;
+        float[] tier = TUNING.BUILDINGS.CONSTRUCTION_MASS_KG.TIER3;
         string[] all_METALS = MATERIALS.ALL_METALS;
         float melting_point = 1600f;
         BuildLocationRule build_location_rule = BuildLocationRule.OnFloor;
         EffectorValues tier2 = NOISE_POLLUTION.NOISY.TIER3;
-        BuildingDef buildingDef = BuildingTemplates.CreateBuildingDef(id, width, height, anim, hitpoints, construction_time, tier, all_METALS, melting_point, build_location_rule, TUNING.BUILDINGS.DECOR.PENALTY.TIER2, tier2, 0.2f);
+
+        BuildingDef buildingDef = BuildingTemplates.CreateBuildingDef(
+            id, width, height, anim, hitpoints, construction_time,
+            tier, all_METALS, melting_point, build_location_rule,
+            TUNING.BUILDINGS.DECOR.PENALTY.TIER2, tier2, 0.2f);
+
         buildingDef.RequiresPowerInput = false;
+        buildingDef.EnergyConsumptionWhenActive = 0f;
+        buildingDef.ExhaustKilowattsWhenActive = 0f;
+        buildingDef.SelfHeatKilowattsWhenActive = 4f;
+        buildingDef.InputConduitType = ConduitType.Liquid;
         buildingDef.OutputConduitType = ConduitType.Liquid;
-        buildingDef.Floodable = false;
-        buildingDef.Invincible = true;
-        buildingDef.Overheatable = false;
-        buildingDef.Entombable = false;
+        buildingDef.LogicInputPorts = LogicOperationalController.CreateSingleInputPortList(new CellOffset(-1, 0));
         buildingDef.ViewMode = OverlayModes.LiquidConduits.ID;
-        buildingDef.AudioCategory = "Metal";
-        buildingDef.UtilityOutputOffset = this.primaryPort.offset;
+        buildingDef.AudioCategory = "HollowMetal";
+        buildingDef.UtilityInputOffset = new CellOffset(-1, 2);
+        buildingDef.UtilityOutputOffset = new CellOffset(2, 2);
+        buildingDef.PermittedRotations = PermittedRotations.FlipH;
+        buildingDef.AddSearchTerms(SEARCH_TERMS.FILTER);
+        buildingDef.AddSearchTerms(SEARCH_TERMS.WATER);
+
+        // 注册并打印调用栈
         GeneratedBuildings.RegisterWithOverlay(OverlayScreen.LiquidVentIDs, "WaterPump");
+        Debug.Log("[WaterPump Mod] WaterPump 注册到 OverlayScreen 完成，调用栈:\n" + Environment.StackTrace);
+
         return buildingDef;
     }
 
-    // Token: 0x06000243 RID: 579 RVA: 0x0000FE75 File Offset: 0x0000E075
+    // Token: 0x06001782 RID: 6018 RVA: 0x00085910 File Offset: 0x00083B10
     public override void ConfigureBuildingTemplate(GameObject go, Tag prefab_tag)
     {
-        base.ConfigureBuildingTemplate(go, prefab_tag);
-        GeneratedBuildings.MakeBuildingAlwaysOperational(go);
-    }
-
-    // Token: 0x06000244 RID: 580 RVA: 0x0000FE90 File Offset: 0x0000E090
-    public override void DoPostConfigureComplete(GameObject go)
-    {
         go.GetComponent<KPrefabID>().AddTag(RoomConstraints.ConstraintTags.IndustrialMachinery, false);
-        go.AddOrGet<LoopingSounds>();
-        go.AddOrGet<DevPump>().elementState = Filterable.ElementState.Liquid;
-        Storage storage = go.AddOrGet<Storage>();
-        storage.capacityKg = 20f;
-        storage.SetDefaultStoredItemModifiers(Storage.StandardInsulatedStorage);
-        go.AddTag(GameTags.CorrosionProof);
+        Storage storage = BuildingTemplates.CreateDefaultStorage(go, false);
+        storage.SetDefaultStoredItemModifiers(Storage.StandardSealedStorage);
+        go.AddOrGet<WaterPurifier>();
+        Prioritizable.AddRef(go);
+        ElementConverter elementConverter = go.AddOrGet<ElementConverter>();
+        elementConverter.consumedElements = new ElementConverter.ConsumedElement[]
+        {
+            new ElementConverter.ConsumedElement(SimHashes.Water.CreateTag(), 0.1f, true)
+        };
+        elementConverter.outputElements = new ElementConverter.OutputElement[]
+        {
+            new ElementConverter.OutputElement(4.5f, SimHashes.Water, 0f, false, true, 0f, 0.5f, 0.75f, byte.MaxValue, 0, true),
+        };
+        ConduitConsumer conduitConsumer = go.AddOrGet<ConduitConsumer>();
+        conduitConsumer.conduitType = ConduitType.Liquid;
+        conduitConsumer.consumptionRate = 10f;
+        conduitConsumer.capacityKG = 20f;
+        conduitConsumer.capacityTag = GameTags.AnyWater;
+        conduitConsumer.forceAlwaysSatisfied = true;
+        conduitConsumer.wrongElementResult = ConduitConsumer.WrongElementResult.Store;
         ConduitDispenser conduitDispenser = go.AddOrGet<ConduitDispenser>();
         conduitDispenser.conduitType = ConduitType.Liquid;
-        conduitDispenser.alwaysDispense = true;
-        conduitDispenser.elementFilter = null;
-        go.AddOrGetDef<OperationalController.Def>();
-        go.GetComponent<KPrefabID>().AddTag(GameTags.OverlayBehindConduits, false);
+        conduitDispenser.invertElementFilter = true;
+        conduitDispenser.elementFilter = new SimHashes[]
+        {
+            SimHashes.DirtyWater
+        };
     }
 
-    // Token: 0x0400016D RID: 365
+    // Token: 0x06001783 RID: 6019 RVA: 0x00085AF3 File Offset: 0x00083CF3
+    public override void DoPostConfigureComplete(GameObject go)
+    {
+        go.AddOrGet<LogicOperationalController>();
+        go.GetComponent<KPrefabID>().AddTag(GameTags.OverlayBehindConduits, false);
+    }
     public const string ID = "WaterPump";
-
-    // Token: 0x0400016E RID: 366
-    private const ConduitType CONDUIT_TYPE = ConduitType.Liquid;
-
-    // Token: 0x0400016F RID: 367
-    private ConduitPortInfo primaryPort = new ConduitPortInfo(ConduitType.Liquid, new CellOffset(2, 2));
 }
