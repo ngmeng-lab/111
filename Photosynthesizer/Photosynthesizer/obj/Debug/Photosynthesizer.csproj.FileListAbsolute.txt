@@ -1,0 +1,6 @@
+D:\wendang\Klei\OxygenNotIncluded\mods\Photosynthesizer\Photosynthesizer\Photosynthesizer\bin\Debug\Photosynthesizer.dll
+D:\wendang\Klei\OxygenNotIncluded\mods\Photosynthesizer\Photosynthesizer\Photosynthesizer\bin\Debug\Photosynthesizer.pdb
+D:\wendang\Klei\OxygenNotIncluded\mods\Photosynthesizer\Photosynthesizer\Photosynthesizer\obj\Debug\Photosynthesizer.csproj.AssemblyReference.cache
+D:\wendang\Klei\OxygenNotIncluded\mods\Photosynthesizer\Photosynthesizer\Photosynthesizer\obj\Debug\Photosynthesizer.csproj.CoreCompileInputs.cache
+D:\wendang\Klei\OxygenNotIncluded\mods\Photosynthesizer\Photosynthesizer\Photosynthesizer\obj\Debug\Photosynthesizer.dll
+D:\wendang\Klei\OxygenNotIncluded\mods\Photosynthesizer\Photosynthesizer\Photosynthesizer\obj\Debug\Photosynthesizer.pdb
